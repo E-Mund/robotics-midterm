@@ -53,9 +53,13 @@ class HumanDetector(Node):
     def detect_people(self, img):
         # TODO 1: letterbox img to 640x640 (RGB, gray padding, no /255)
         blob, ratio = self.letterbox(img)
+
         # TODO 2: self.net.setInput(blob); run forward -> (8400, 85)
+        self.net.setInput(blob)
+        output = self.net.forward()[0]
 
         # TODO 3: decode boxes with the grid + strides (see yolox.py)
+
         # TODO 4: keep person scores > 0.5, NMSBoxes, scale back to img
         return []
 
