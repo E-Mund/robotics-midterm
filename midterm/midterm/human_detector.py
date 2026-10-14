@@ -54,23 +54,21 @@ class HumanDetector(Node):
         # TODO 1: letterbox img to 640x640 (RGB, gray padding, no /255)
         blob, ratio = self.letterbox(img)
         # TODO 2: self.net.setInput(blob); run forward -> (8400, 85)
+
         # TODO 3: decode boxes with the grid + strides (see yolox.py)
         # TODO 4: keep person scores > 0.5, NMSBoxes, scale back to img
         return []
 
     def letterbox(self, img):
-        (
-            h,
-            w,
-        ) = img.shape[:2]
+        h, w = img.shape[:2]
         ratio = min(640 / h, 640 / w)
         w_new = int(w * ratio)
         h_new = int(h * ratio)
 
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         resized = cv2.resize(rgb, (w_new, h_new))
-        padded = np.full((640, 640, 3), 144, dtype=np.float32)
-        padded[:h_new, :w_new]
+        padded = np.full((640, 640, 3), 114, dtype=np.float32)
+        padded[:h_new, :w_new] = resized
 
         blob = np.transpose(padded, (2, 0, 1))[np.newaxis]
         return blob, ratio
