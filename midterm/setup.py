@@ -1,3 +1,5 @@
+from glob import glob
+
 from setuptools import find_packages, setup
 
 package_name = "midterm"
@@ -9,6 +11,7 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
+        ("share/" + package_name + "/models", glob("models/*.onnx")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
@@ -24,6 +27,7 @@ setup(
     entry_points={
         "console_scripts": [
             "sub = midterm.sub:main",
+            "human_detector = midterm.human_detector:main",
         ],
     },
 )
