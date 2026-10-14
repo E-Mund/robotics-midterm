@@ -34,7 +34,8 @@ class Subscriber(Node):
 
     def seekGoal(self, msg, priority: int):
         if not self.nav_client.server_is_ready():
-            return
+            print("Nav server is not ready")
+            exit()
         goal = NavigateToPose.Goal()
         goal.pose.header = msg.header
         goal.pose.pose.position.x = msg.point.x
@@ -45,6 +46,7 @@ class Subscriber(Node):
         def accepted(future):
             self.goalHandle = future.result()
             if self.goalHandle.accepted:
+                print(f"Goal {priority} - in progress")
                 result = self.goalHandle.get_result_async()
                 result.add_done_callback(
                     lambda future: self.checkGoalFinished(future, priority)
@@ -54,7 +56,9 @@ class Subscriber(Node):
 
     def checkGoalFinished(self, future, priority: int):
         if future.result().status != GoalStatus.STATUS_SUCCEEDED:
+            print(f"Goal {priority} - failure")
             return
+        print(f"Goal {priority} - sucess")
         self.goals[priority][1] = None
         nextGoal = self.getGoal()
         if nextGoal is not None:
