@@ -1,0 +1,11 @@
+{
+  "name": "team1 ROS 2 Humble",
+  "build": { "dockerfile": "Dockerfile" },
+  "features": { "ghcr.io/devcontainers/features/desktop-lite:1": {} },
+  "forwardPorts": [6080],
+  "portsAttributes": { "6080": { "label": "desktop" } },
+  "hostRequirements": { "cpus": 4 },
+  "containerEnv": { "LIBGL_ALWAYS_SOFTWARE": "1", "TURTLEBOT3_MODEL": "waffle_pi" },
+  "remoteUser": "root",
+  "postCreateCommand": "bash .devcontainer/setup.sh"
+}
