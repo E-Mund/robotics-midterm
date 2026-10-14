@@ -29,13 +29,11 @@ class Subscriber(Node):
 
     def updateGoals(self, msg, priority: int):
         self.goals[priority][1] = msg
-        self.seekGoal(msg, priority)
-        # if not any((goal[1] is not None) for goal in self.goals[priority:]):
-        #     self.seekGoal(msg, priority)
+        if not any((goal[1] is not None) for goal in self.goals[:priority]):
+            self.seekGoal(msg, priority)
 
     def seekGoal(self, msg, priority: int):
         if not self.nav_client.server_is_ready():
-            self.get_logger().warn("Nav2 is not ready")
             return
         goal = NavigateToPose.Goal()
         goal.pose.header = msg.header
@@ -43,16 +41,27 @@ class Subscriber(Node):
         goal.pose.pose.position.y = msg.point.y
         goal.pose.pose.orientation.w = 1.0
         future = self.nav_client.send_goal_async(goal)
-        future.add_done_callback(lambda f: self.doneCallback(f, priority))
 
-    # def getGoal(self) -> int:
-    #     return next((goal[1] for goal in self.goals if goal[1] is not None), -1)
+        def accepted(future):
+            self.goalHandle = future.result()
+            if self.goalHandle.accepted:
+                result = self.goalHandle.get_result_async()
+                result.add_done_callback(
+                    lambda future: self.checkGoalFinished(future, priority)
+                )
 
-    def doneCallback(self, future, priority: int):
-        goal_handle = future.result()
-        if not goal_handle.accepted:
-            self.get_logger().warn(f"Task {priority} was rejected by Nav2")
+        future.add_done_callback(accepted)
+
+    def checkGoalFinished(self, future, priority: int):
+        if future.result().status != GoalStatus.STATUS_SUCCEEDED:
             return
+        self.goals[priority][1] = None
+        nextGoal = self.getGoal()
+        if nextGoal is not None:
+            self.seekGoal(nextGoal[1], self.goals.index(nextGoal))
+
+    def getGoal(self):
+        return next((goal for goal in self.goals if goal[1] is not None), None)
 
 
 def main(args=None):
