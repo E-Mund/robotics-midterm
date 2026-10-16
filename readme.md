@@ -25,4 +25,4 @@ To run:
     ros2 run midterm sub
 
   Terminal 6:
-    ros2 topic pub --once /goal1 geometry_msgs/msg/PointStamped   "{header: {frame_id: map}, point: {x: 0.0, y: 5.0, z: 0.0}}"
+    ros2 topic pub --once /goal1 geometry_msgs/msg/PointStamped   "{header: {frame_id: map}, point: {x: ..., y: ... z: ...}}" (values from -5 to 5 are currently out of the map's boundaries)
