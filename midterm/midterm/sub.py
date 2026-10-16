@@ -99,7 +99,7 @@ def createGoal(msg: PointStamped) -> NavigateToPose.Goal:
     goal.pose.header = msg.header
     goal.pose.pose.position.x = msg.point.x
     goal.pose.pose.position.y = msg.point.y
-    goal.pose.pose.orientation.w = 1
+    goal.pose.pose.orientation.w = 1.0
     return goal
 
 
