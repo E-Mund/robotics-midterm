@@ -7,6 +7,7 @@ To run:
   ALL TERMINALS:
     source /opt/ros/humble/setup.bash
     source install/setup.bash
+    export TURTLEBOT3_MODEL=waffle
 
   Terminal 1:
     ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py
