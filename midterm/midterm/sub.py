@@ -1,9 +1,11 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
-from geometry_msgs.msg import PointStamped
+from rclpy.qos import QoSProfile, DurabilityPolicy
+from geometry_msgs.msg import Point, PointStamped
 from nav2_msgs.action import NavigateToPose
 from frontier_exploration_ros2.srv import ControlExploration
+from project_status.msg import Status as StatusMsg
 from action_msgs.msg import GoalStatus
 from dataclasses import dataclass
 from enum import Enum
@@ -32,6 +34,19 @@ class Subscriber(Node):
         self.create_subscription(PointStamped, "/goal1", self.goal1Callback, DEPTH)
         self.create_subscription(PointStamped, "/goal2", self.goal2Callback, DEPTH)
         self.create_subscription(PointStamped, "/goal3", self.goal3Callback, DEPTH)
+
+        self.humanFound = False
+        self.humanLocation: Point | None = None
+        self.create_subscription(
+            Point,
+            "human_location",
+            self.humanCallback,
+            QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL),
+        )
+
+        self.status_pub = self.create_publisher(StatusMsg, "/status", DEPTH)
+        self.create_timer(1.0, self.publishStatus)
+
         self.exploration_client = self.create_client(
             ControlExploration,
             "/control_exploration",
@@ -58,15 +73,25 @@ class Subscriber(Node):
 
         future.add_done_callback(exploreCallback)
 
-        # TODO(Rob): human detection hand-off from human_detector (Ethan).
-        # human_detector publishes the human's map-frame location ONCE, on the
-        # relative topic "human_location" (geometry_msgs/Point, z = 0), after
-        # 5 frames in a row agree. It's published transient local, so subscribe
-        # with matching QoS or a late subscriber misses it:
-        #     QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
-        # On receipt: set human_found = True, copy the point into
-        # Status.human_location, publish /status, and stop the robot
-        # (finding the human is the stopping criterion).
+    def humanCallback(self, msg: Point):
+        if self.humanFound:
+            return
+        self.humanFound = True
+        self.humanLocation = msg
+        print(f"Human found at ({msg.x:.2f}, {msg.y:.2f})")
+        self.publishStatus()
+
+    def publishStatus(self):
+        status = StatusMsg()
+        status.goal1_received = self.goals[0].message is not None
+        status.goal1_achieved = self.goals[0].status == Status.COMPLETE
+        status.goal2_received = self.goals[1].message is not None
+        status.goal2_achieved = self.goals[1].status == Status.COMPLETE
+        status.emergency = self.goals[2].status == Status.ONGOING
+        status.human_found = self.humanFound
+        if self.humanLocation is not None:
+            status.human_location = self.humanLocation
+        self.status_pub.publish(status)
 
     def goal1Callback(self, msg: PointStamped):
         self.updateGoals(msg, 0)
