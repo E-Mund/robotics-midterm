@@ -15,6 +15,10 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, CameraInfo
 from visualization_msgs.msg import Marker
 import numpy as np
+from rclpy.time import Time
+from tf2_ros import Buffer, TransformListener, TransformException
+from geometry_msgs.msg import PointStamped
+from tf2_geometry_msgs import do_transform_point
 
 INPUT_SIZE = 640
 CONF_THRESHOLD = 0.5
@@ -28,6 +32,9 @@ class HumanDetector(Node):
         self.K = None
         self.D = None
         self.strides = [8, 16, 32]
+
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
 
         model_path = self.declare_parameter("model_path", "").value
         self.net = cv2.dnn.readNet(model_path)
@@ -71,6 +78,34 @@ class HumanDetector(Node):
                 (0, 255, 0),
                 2,
             )
+
+            box = (x, y, w, h)
+            loc = self.locate_person(box)
+
+            if loc is not None:
+                self.get_logger().info(f"person at {loc}")
+
+                marker = Marker()
+                marker.header.frame_id = "map"
+                marker.header.stamp = msg.header.stamp
+                marker.type = Marker.CYLINDER
+                marker.action = Marker.ADD
+
+                marker.pose.position.x = loc[0]
+                marker.pose.position.y = loc[1]
+                marker.pose.position.z = 0.85
+                marker.pose.orientation.w = 1.0
+
+                marker.scale.x = 0.3
+                marker.scale.y = 0.3
+                marker.scale.z = 1.7
+
+                marker.color.r = 0.0
+                marker.color.g = 1.0
+                marker.color.b = 0.0
+                marker.color.a = 1.0
+
+                self.marker_pub.publish(marker)
 
         cv2.imshow("camera", img)
         cv2.waitKey(1)
@@ -130,6 +165,59 @@ class HumanDetector(Node):
 
     def unletterbox(self, bbox, letterbox_scale):
         return bbox / letterbox_scale
+
+    def locate_person(self, box):
+        if self.K is None:
+            return None
+
+        x, y, w, h = box
+
+        u = x + w / 2
+        v = y + h
+
+        ray = (
+            (u - self.K[0, 2]) / self.K[0, 0],
+            (v - self.K[1, 2]) / self.K[1, 1],
+            1.0,
+        )
+
+        try:
+            tf = self.tf_buffer.lookup_transform(
+                "map", "camera_rgb_optical_frame", Time()
+            )
+        except TransformException as e:
+            self.get_logger().warn(f"no transform yet: {e}", throttle_duration_sec=2.0)
+            return None
+
+        point_a = PointStamped()
+        point_b = PointStamped()
+
+        point_b.point.x = ray[0]
+        point_b.point.y = ray[1]
+        point_b.point.z = ray[2]
+
+        a_transform = do_transform_point(point_a, tf)
+        b_transform = do_transform_point(point_b, tf)
+
+        cam_pos = np.array(
+            [a_transform.point.x, a_transform.point.y, a_transform.point.z]
+        )
+        ray_dir = np.array(
+            [b_transform.point.x, b_transform.point.y, b_transform.point.z]
+        )
+
+        direction = ray_dir - cam_pos
+
+        if direction[2] >= 0:
+            return None
+
+        t = -cam_pos[2] / direction[2]
+        hit = cam_pos + t * direction
+
+        if np.linalg.norm(hit[:2] - cam_pos[:2]) > 8:
+            return None
+
+        return float(hit[0]), float(hit[1])
 
 
 def main(args=None):
