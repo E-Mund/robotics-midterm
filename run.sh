@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build the workspace and start the full sim: Gazebo (House world), slam_toolbox,
-# Nav2, RViz and sub. Optionally sends a goal scenario once Nav2 is ready.
+# Build the workspace and start the full sim: Gazebo (House world with a human),
+# slam_toolbox, Nav2, RViz, sub and human_detector. Optionally sends a goal scenario once Nav2 is ready.
 #
 #   ./run.sh                        # sim + RViz
 #   ./run.sh --scenario both        # ...and send goal1, goal2 (see goal_publisher.py)

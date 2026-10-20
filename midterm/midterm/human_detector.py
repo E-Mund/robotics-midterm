@@ -12,7 +12,10 @@ Publishes:
 Person detection: YOLOX from OpenCV Zoo (Apache-2.0), run with cv2.dnn.
 """
 
+import os
+
 import cv2
+from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 import rclpy
 from rclpy.node import Node
@@ -42,8 +45,15 @@ class HumanDetector(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        model_path = self.declare_parameter("model_path", "").value
+        default_model = os.path.join(
+            get_package_share_directory("midterm"),
+            "models",
+            "object_detection_yolox_2022nov.onnx",
+        )
+        model_path = self.declare_parameter("model_path", default_model).value
         self.net = cv2.dnn.readNet(model_path)
+
+        self.show = self.declare_parameter("show", False).value
 
         self.create_subscription(
             Image, "camera/image_raw", self.image_callback, qos_profile_sensor_data
@@ -122,8 +132,9 @@ class HumanDetector(Node):
 
         self.confirm(located)
 
-        cv2.imshow("camera", img)
-        cv2.waitKey(1)
+        if self.show:
+            cv2.imshow("camera", img)
+            cv2.waitKey(1)
 
     def confirm(self, loc):
         if self.found:

@@ -5,8 +5,9 @@ From the workspace root (this directory):
 
     ./run.sh
 
-This builds the workspace and starts the whole sim: Gazebo (House world, TurtleBot3
-waffle), slam_toolbox, Nav2, RViz and `sub`. Ctrl-C stops everything.
+This builds the workspace and starts the whole sim: Gazebo (House world with a human
+at (3.5, 1.8), from `midterm/worlds/`; TurtleBot3 waffle), slam_toolbox, Nav2, RViz, `sub` and
+`human_detector`. Ctrl-C stops everything.
 
 Options:
 

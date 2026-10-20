@@ -58,6 +58,16 @@ class Subscriber(Node):
 
         future.add_done_callback(exploreCallback)
 
+        # TODO(Rob): human detection hand-off from human_detector (Ethan).
+        # human_detector publishes the human's map-frame location ONCE, on the
+        # relative topic "human_location" (geometry_msgs/Point, z = 0), after
+        # 5 frames in a row agree. It's published transient local, so subscribe
+        # with matching QoS or a late subscriber misses it:
+        #     QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        # On receipt: set human_found = True, copy the point into
+        # Status.human_location, publish /status, and stop the robot
+        # (finding the human is the stopping criterion).
+
     def goal1Callback(self, msg: PointStamped):
         self.updateGoals(msg, 0)
 
