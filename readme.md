@@ -1,24 +1,41 @@
 # Midterm Programming Assignment
 ## Running instructions
 
-### Terminal 1: Gazebo
+From the workspace root (this directory):
+
+    ./run.sh --scenario emergency
+
+This builds the workspace and starts everything: Gazebo (House world with a human at
+(3.5, 1.8)), slam_toolbox, Nav2, frontier exploration, RViz, `sub` and `human_detector`,
+then sends goal1 and goal2, and goal3 (the emergency) 10 s later. The first run clones
+`frontier_exploration_ros2` into `deps/`. Ctrl-C stops everything.
+
+Options: `--no-rviz`, `--no-build`, `--scenario goal1_only|goal2_only|both|goal2_then_goal1|emergency`
+(see `midterm/midterm/goal_publisher.py`); anything else goes to the launch file, e.g.
+`show_detector:=true` or `x_pose:=-2.5 y_pose:=3.5` (the default spawn).
+
+### Manual (one terminal each)
+
+```
+# Terminal 1: Gazebo
 ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py x_pose:=-2.5 y_pose:=3.5
 
-### Terminal 2: SLAM
+# Terminal 2: SLAM
 ros2 launch slam_toolbox online_async_launch.py use_sim_time:=true
 
-### Terminal 3: Navigation
+# Terminal 3: Navigation
 ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true
 
-### Terminal 4: Your node
+# Terminal 4: Your node
 ros2 run midterm sub --ros-args -p use_sim_time:=true
 
-### Terminal 5: Frontier exploration
+# Terminal 5: Frontier exploration
 ros2 launch frontier_exploration_ros2 frontier_explorer.launch.py use_sim_time:=true autostart:=false control_service_enabled:=true
+```
 
 To send goals by hand from another terminal (after `source install/setup.bash`):
 
-    ros2 topic pub --once /goal1 geometry_msgs/msg/PointStamped "{header: {frame_id: map}, point: {x: -3.8, y: -1.0}}"
+    ros2 topic pub --once /goal1 geometry_msgs/msg/PointStamped "{header: {frame_id: map}, point: {x: -4.2, y: 3.5}}"
 
 Goals outside the area SLAM has mapped so far fail to plan (Nav2's global costmap is
 only as big as the current map). The House world spans about x = -7.6..7.6, y = -5.4..5.4.

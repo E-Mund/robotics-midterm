@@ -1,6 +1,6 @@
 """
 Full test environment: Gazebo House world with a human (worlds/), slam_toolbox,
-Nav2, sub.py and human_detector.
+Nav2, frontier_exploration_ros2, sub.py and human_detector.
 
     ros2 launch midterm test_env.launch.py
     ros2 launch midterm test_env.launch.py rviz:=true x_pose:=1.0 y_pose:=2.0
@@ -47,13 +47,14 @@ def generate_launch_description():
     world = os.path.join(share, "worlds", "turtlebot3_house_with_human.world")
     slam_params = os.path.join(config, "slam_toolbox.yaml")
     nav2_params = os.path.join(config, "nav2_params.yaml")
+    explorer_params = os.path.join(config, "frontier_explorer.yaml")
 
     return LaunchDescription([
         DeclareLaunchArgument("rviz", default_value="false"),
         DeclareLaunchArgument("show_detector", default_value="false",
                               description="Open the detector's camera window"),
-        DeclareLaunchArgument("x_pose", default_value="-2.0"),
-        DeclareLaunchArgument("y_pose", default_value="-0.5"),
+        DeclareLaunchArgument("x_pose", default_value="-2.5"),
+        DeclareLaunchArgument("y_pose", default_value="3.5"),
         DeclareLaunchArgument("world", default_value=world,
                               description="Gazebo world file"),
 
@@ -84,6 +85,13 @@ def generate_launch_description():
                     get_package_share_directory("nav2_bringup"),
                     "launch", "rviz_launch.py")),
                 condition=IfCondition(LaunchConfiguration("rviz")),
+            ),
+            # Starts idle; sub.py starts/stops it over /control_exploration.
+            # Explicit namespace: rviz_launch.py above leaks namespace:=navigation
+            include(
+                "frontier_exploration_ros2", "frontier_explorer.launch.py",
+                namespace="", use_sim_time="true", autostart="false",
+                control_service_enabled="true", params_file=explorer_params,
             ),
         ]),
         TimerAction(period=25.0, actions=[

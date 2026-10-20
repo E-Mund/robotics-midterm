@@ -34,16 +34,13 @@ class GoalPublisher(Node):
     def __init__(self):
         super().__init__("goal_publisher")
         self.scenario = self.declare_parameter("scenario", "both").value
-        # Seconds before the delayed goal in goal2_then_goal1 / emergency
         self.delay = self.declare_parameter("delay", 10.0).value
         self.coords = {
             name: self.declare_parameter(name, default).value
-            # Defaults verified reachable in the House world from the default
-            # spawn (-2.0, -0.5). Goals outside the SLAM map so far fail.
             for name, default in (
-                ("goal1", [-3.8, -1.0]),
-                ("goal2", [-4.5, -2.5]),
-                ("goal3", [-2.0, -0.5]),
+                ("goal1", [-0.6, 1.2]),
+                ("goal2", [2.7, 0.4]),
+                ("goal3", [-0.4, 0.5]),
             )
         }
 
@@ -59,7 +56,6 @@ class GoalPublisher(Node):
         self.events = [
             (delay * self.delay, name) for delay, name in SCENARIOS[self.scenario]
         ]
-        # Only used to check Nav2 is up; goals still go through sub.py
         self.nav_client = ActionClient(self, NavigateToPose, "navigate_to_pose")
         self.ready_since = None
         self.start = None
@@ -69,8 +65,6 @@ class GoalPublisher(Node):
         )
 
     def tick(self):
-        # Wait until sub.py is listening and Nav2 is up, plus a settle time so
-        # sub.py's own action client has discovered Nav2 too
         if self.start is None:
             ready = (
                 self.pubs["goal1"].get_subscription_count() > 0
