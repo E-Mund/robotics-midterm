@@ -127,8 +127,9 @@ controller_server:
     # Progress checker parameters
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
-      movement_time_allowance: 10.0
+      # Allow slow, deliberate progress through narrow passages.
+      required_movement_radius: 0.2
+      movement_time_allowance: 20.0
     # Goal checker parameters
     #precise_goal_checker:
     #  plugin: "nav2_controller::SimpleGoalChecker"
@@ -162,13 +163,15 @@ controller_server:
       decel_lim_theta: -3.2
       vx_samples: 20
       vy_samples: 5
-      vtheta_samples: 20
-      sim_time: 1.7
+      # Finer steering choices and the shared config's longer preview.
+      vtheta_samples: 40
+      sim_time: 2.0
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
       xy_goal_tolerance: 0.25
-      trans_stopped_velocity: 0.25
+      # Must be below max_speed_xy so motion is not classified as stopped.
+      trans_stopped_velocity: 0.05
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
@@ -200,7 +203,8 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        # Soft cost gradient encourages hallway centering; not a clearance limit.
+        inflation_radius: 1.0
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -258,7 +262,8 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        # Match local inflation so planning and control favor hallway centers.
+        inflation_radius: 1.0
       always_send_full_costmap: True
 
 map_server:
