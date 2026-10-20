@@ -83,13 +83,15 @@ class Subscriber(Node):
         self.goals[goalNum].message = msg
         if goalNum == 1 and self.goals[0].status == Status.PENDING:
             return print("Goal 2 is queued")
-        if self.goalHandle is None:
-            self.explore(
-                ControlExploration.Request.ACTION_STOP,
-                on_idle=lambda: self.seekGoal(goalNum),
-            )
-        elif goalNum == 2:
-            raise NotImplementedError("Goal 3 logic not implemented")
+        if self.goalHandle is not None:
+            if goalNum == 2:
+                return self.goalHandle.cancel_goal_async()
+            else:
+                return print("Navigation goal currently active")
+        self.explore(
+            ControlExploration.Request.ACTION_STOP,
+            on_idle=lambda: self.seekGoal(goalNum),
+        )
 
     def seekGoal(self, goalNum: int):
         if not self.nav_client.server_is_ready():
@@ -107,23 +109,31 @@ class Subscriber(Node):
                 result.add_done_callback(
                     lambda future: self.checkGoalComplete(future, goalNum)
                 )
+            else:
+                self.goalHandle = None
+                return self.explore(ControlExploration.Request.ACTION_START)
 
         future.add_done_callback(accepted)
 
     def checkGoalComplete(self, future, goalNum: int):
-        if future.result().status != GoalStatus.STATUS_SUCCEEDED:
-            print(f"Goal {goalNum + 1} - failure")
-            self.goalHandle = None
-            self.explore(ControlExploration.Request.ACTION_START)
-            return
-        print(f"Goal {goalNum + 1} - success")
-        self.goals[goalNum].status = Status.COMPLETE
         self.goalHandle = None
-        nextGoalNum = self.getNextGoalNum()
-        if nextGoalNum is not None:
-            self.seekGoal(nextGoalNum)
-        else:
-            self.explore(ControlExploration.Request.ACTION_START)
+
+        if future.result().status == GoalStatus.STATUS_SUCCEEDED:
+            self.goals[goalNum].status = Status.COMPLETE
+
+        if (
+            goalNum != 2
+            and self.goals[2].status == Status.PENDING
+            and self.goals[2].message is not None
+        ):
+            return self.seekGoal(2)
+
+        if future.result().status == GoalStatus.STATUS_SUCCEEDED:
+            nextGoalNum = self.getNextGoalNum()
+            if nextGoalNum is not None:
+                return self.seekGoal(nextGoalNum)
+
+        return self.explore(ControlExploration.Request.ACTION_START)
 
     def getNextGoalNum(self) -> int | None:
         if self.goals[0].message is not None and self.goals[0].status == Status.PENDING:
