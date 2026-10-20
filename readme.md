@@ -1,23 +1,20 @@
 # Midterm Programming Assignment
 ## Running instructions
 
-From the workspace root (this directory):
+# Terminal 1: Gazebo
+ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py x_pose:=-2.5 y_pose:=3.5
 
-    ./run.sh
+# Terminal 2: SLAM
+ros2 launch slam_toolbox online_async_launch.py use_sim_time:=true
 
-This builds the workspace and starts the whole sim: Gazebo (House world with a human
-at (3.5, 1.8), from `midterm/worlds/`; TurtleBot3 waffle), slam_toolbox, Nav2, RViz, `sub` and
-`human_detector`. Ctrl-C stops everything.
+# Terminal 3: Navigation
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true
 
-Options:
+# Terminal 4: Your node
+ros2 run midterm sub --ros-args -p use_sim_time:=true
 
-    ./run.sh --scenario both           # also send goals once Nav2 is ready
-    ./run.sh --no-rviz                 # skip RViz
-    ./run.sh --no-build                # skip colcon build
-    ./run.sh x_pose:=1.0 y_pose:=2.0   # other args go to the launch file (spawn point)
-
-Scenarios (`midterm/midterm/goal_publisher.py`): `goal1_only`, `goal2_only`, `both`,
-`goal2_then_goal1`, `emergency`. Default goals are reachable from the default spawn.
+# Terminal 5: Frontier exploration
+ros2 launch frontier_exploration_ros2 frontier_explorer.launch.py use_sim_time:=true autostart:=false control_service_enabled:=true
 
 To send goals by hand from another terminal (after `source install/setup.bash`):
 
