@@ -37,6 +37,9 @@ bottom of the person's box onto the floor to get their map position, and publish
 once on `human_location` after 5 frames in a row agree. `show_detector:=true` opens a
 camera window with the boxes.
 
+## Goal logic - Nathanael Hazard
+Worked out goal logics in tandem with Roberto to accept the goals and start movements.
+
 Sources:
 
 - Model: [OpenCV Zoo YOLOX](https://huggingface.co/opencv/opencv_zoo/tree/main/models/object_detection_yolox) (`object_detection_yolox_2022nov.onnx`, Apache-2.0)
