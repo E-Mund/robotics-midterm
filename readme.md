@@ -29,3 +29,15 @@ only as big as the current map). The House world spans about x = -7.6..7.6, y = 
 Requires ROS 2 Humble with `turtlebot3_gazebo`, `slam_toolbox` and `nav2_bringup`.
 The script sources `/opt/ros/humble/setup.bash` if ROS isn't already sourced.
 Nav2 and slam_toolbox settings are in `midterm/config/`.
+
+## Human detection
+
+`human_detector` runs YOLOX on the camera image with OpenCV's `cv2.dnn`, projects the
+bottom of the person's box onto the floor to get their map position, and publishes it
+once on `human_location` after 5 frames in a row agree. `show_detector:=true` opens a
+camera window with the boxes.
+
+Sources:
+
+- Model: [OpenCV Zoo YOLOX](https://huggingface.co/opencv/opencv_zoo/tree/main/models/object_detection_yolox) (`object_detection_yolox_2022nov.onnx`, Apache-2.0)
+- Pre/post-processing based on the OpenCV Zoo demo: [`yolox.py`](https://huggingface.co/opencv/opencv_zoo/blob/main/models/object_detection_yolox/yolox.py) (anchor grid decoding, NMS) and [`demo.py`](https://huggingface.co/opencv/opencv_zoo/blob/main/models/object_detection_yolox/demo.py) (letterbox / unletterbox)
