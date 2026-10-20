@@ -1,19 +1,19 @@
 # Midterm Programming Assignment
 ## Running instructions
 
-# Terminal 1: Gazebo
+### Terminal 1: Gazebo
 ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py x_pose:=-2.5 y_pose:=3.5
 
-# Terminal 2: SLAM
+### Terminal 2: SLAM
 ros2 launch slam_toolbox online_async_launch.py use_sim_time:=true
 
-# Terminal 3: Navigation
+### Terminal 3: Navigation
 ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true
 
-# Terminal 4: Your node
+### Terminal 4: Your node
 ros2 run midterm sub --ros-args -p use_sim_time:=true
 
-# Terminal 5: Frontier exploration
+### Terminal 5: Frontier exploration
 ros2 launch frontier_exploration_ros2 frontier_explorer.launch.py use_sim_time:=true autostart:=false control_service_enabled:=true
 
 To send goals by hand from another terminal (after `source install/setup.bash`):
@@ -27,7 +27,10 @@ Requires ROS 2 Humble with `turtlebot3_gazebo`, `slam_toolbox` and `nav2_bringup
 The script sources `/opt/ros/humble/setup.bash` if ROS isn't already sourced.
 Nav2 and slam_toolbox settings are in `midterm/config/`.
 
-## Human detection
+## Navigation - Roberto Molina
+Runs frontier navigation algorithm to explore the enviornment and implements custom goal logic.
+
+## Human detection - Ethan Mund
 
 `human_detector` runs YOLOX on the camera image with OpenCV's `cv2.dnn`, projects the
 bottom of the person's box onto the floor to get their map position, and publishes it
