@@ -3,6 +3,11 @@ ROS node: find the human in the camera feed.
 
 Subscribes (relative name, resolves under the team namespace):
     camera/image_raw     sensor_msgs/Image
+    camera/camera_info   sensor_msgs/CameraInfo
+
+Publishes:
+    human_location       geometry_msgs/Point   once, map frame (transient local)
+    person_marker        visualization_msgs/Marker
 
 Person detection: YOLOX from OpenCV Zoo (Apache-2.0), run with cv2.dnn.
 """
@@ -11,18 +16,19 @@ import cv2
 from cv_bridge import CvBridge
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy
 from sensor_msgs.msg import Image, CameraInfo
 from visualization_msgs.msg import Marker
 import numpy as np
 from rclpy.time import Time
 from tf2_ros import Buffer, TransformListener, TransformException
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import Point, PointStamped
 from tf2_geometry_msgs import do_transform_point
 
 INPUT_SIZE = 640
 CONF_THRESHOLD = 0.5
 NMS_THRESHOLD = 0.45
+CONFIRM_FRAMES = 5
 
 
 class HumanDetector(Node):
@@ -51,6 +57,11 @@ class HumanDetector(Node):
 
         self.marker_pub = self.create_publisher(Marker, "person_marker", 10)
 
+        latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        self.location_pub = self.create_publisher(Point, "human_location", latched)
+        self.recent = []
+        self.found = False
+
         self.grids = []
         self.expanded_strides = []
         sizes = [INPUT_SIZE // stride for stride in self.strides]
@@ -66,6 +77,7 @@ class HumanDetector(Node):
     def image_callback(self, msg):
         img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         people = self.detect_people(img)
+        located = None
 
         for (x, y, w, h), score in people:
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -83,6 +95,7 @@ class HumanDetector(Node):
             loc = self.locate_person(box)
 
             if loc is not None:
+                located = loc
                 self.get_logger().info(f"person at {loc}")
 
                 marker = Marker()
@@ -107,8 +120,26 @@ class HumanDetector(Node):
 
                 self.marker_pub.publish(marker)
 
+        self.confirm(located)
+
         cv2.imshow("camera", img)
         cv2.waitKey(1)
+
+    def confirm(self, loc):
+        if self.found:
+            return
+        if loc is None:
+            self.recent.clear()
+            return
+
+        self.recent.append(loc)
+        if len(self.recent) < CONFIRM_FRAMES:
+            return
+
+        x, y = np.mean(self.recent, axis=0)
+        self.location_pub.publish(Point(x=float(x), y=float(y), z=0.0))
+        self.found = True
+        self.get_logger().info(f"human found at ({x:.2f}, {y:.2f})")
 
     def info_callback(self, msg):
         self.K = np.array(msg.k).reshape(3, 3)
