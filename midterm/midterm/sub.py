@@ -10,7 +10,7 @@ from enum import Enum
 
 DEPTH = 10
 
-Status = Enum("Status", ["PENDING", "COMPLETE"])
+Status = Enum("Status", ["PENDING", "ONGOING", "COMPLETE"])
 
 
 @dataclass
@@ -77,17 +77,32 @@ class Subscriber(Node):
     def goal3Callback(self, msg: PointStamped):
         self.updateGoals(msg, 2)
 
+    def isPending(self, goalNum: int) -> bool:
+        return (
+            self.goals[goalNum].status == Status.PENDING
+            and self.goals[goalNum].message is not None
+        )
+
+    def cancelGoal(self):
+        future = self.goalHandle.cancel_goal_async()
+        return future.add_done_callback(checkCancellation)
+
     def updateGoals(self, msg: PointStamped, goalNum: int):
         if self.goals[goalNum].status == Status.COMPLETE:
             return print("Goal already completed")
+        if self.goals[goalNum].status == Status.ONGOING:
+            return print("Goal currently ongoing")
+
         self.goals[goalNum].message = msg
-        if goalNum == 1 and self.goals[0].status == Status.PENDING:
-            return print("Goal 2 is queued")
-        if self.goalHandle is not None:
-            if goalNum == 2:
-                return self.goalHandle.cancel_goal_async()
-            else:
-                return print("Navigation goal currently active")
+        if goalNum == 1 and self.goals[0].status != Status.COMPLETE:
+            return print("Goal 1 pending, goal 2 is queued")
+
+        if any(goal.status == Status.ONGOING for goal in self.goals):
+            if goalNum == 2 and self.goalHandle is not None:
+                return self.cancelGoal()
+            return print("Goal currently ongoing")
+
+        self.goals[goalNum].status = Status.ONGOING
         self.explore(
             ControlExploration.Request.ACTION_STOP,
             on_idle=lambda: self.seekGoal(goalNum),
@@ -96,10 +111,12 @@ class Subscriber(Node):
     def seekGoal(self, goalNum: int):
         if not self.nav_client.server_is_ready():
             raise RuntimeError("Nav server is not ready")
-        goal = self.goals[goalNum]
-        if goal.message == None:
+        if self.goals[goalNum].message is None:
             raise RuntimeError("No message for goal")
-        future = self.nav_client.send_goal_async(createGoal(goal.message))
+        self.goals[goalNum].status = Status.ONGOING
+        future = self.nav_client.send_goal_async(
+            createGoal(self.goals[goalNum].message)
+        )
 
         def accepted(future):
             self.goalHandle = future.result()
@@ -109,8 +126,13 @@ class Subscriber(Node):
                 result.add_done_callback(
                     lambda future: self.checkGoalComplete(future, goalNum)
                 )
+                if goalNum != 2 and self.isPending(2):
+                    return self.cancelGoal()
             else:
                 self.goalHandle = None
+                self.goals[goalNum].status = Status.PENDING
+                if goalNum != 2 and self.isPending(2):
+                    return self.seekGoal(2)
                 return self.explore(ControlExploration.Request.ACTION_START)
 
         future.add_done_callback(accepted)
@@ -120,12 +142,10 @@ class Subscriber(Node):
 
         if future.result().status == GoalStatus.STATUS_SUCCEEDED:
             self.goals[goalNum].status = Status.COMPLETE
+        else:
+            self.goals[goalNum].status = Status.PENDING
 
-        if (
-            goalNum != 2
-            and self.goals[2].status == Status.PENDING
-            and self.goals[2].message is not None
-        ):
+        if goalNum != 2 and self.isPending(2):
             return self.seekGoal(2)
 
         if future.result().status == GoalStatus.STATUS_SUCCEEDED:
@@ -136,15 +156,16 @@ class Subscriber(Node):
         return self.explore(ControlExploration.Request.ACTION_START)
 
     def getNextGoalNum(self) -> int | None:
-        if self.goals[0].message is not None and self.goals[0].status == Status.PENDING:
+        if self.isPending(0):
             return 0
-        elif (
-            self.goals[0].status == Status.COMPLETE
-            and self.goals[1].message is not None
-            and self.goals[1].status == Status.PENDING
-        ):
+        if self.goals[0].status == Status.COMPLETE and self.isPending(1):
             return 1
         return None
+
+def checkCancellation(future):
+    if not future.result().goals_canceling:
+        raise RuntimeError("Nav2 did not accept goal cancellation")
+
 
 def createGoal(msg: PointStamped) -> NavigateToPose.Goal:
     goal = NavigateToPose.Goal()
