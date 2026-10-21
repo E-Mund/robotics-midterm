@@ -56,6 +56,8 @@ class Subscriber(Node):
         self.explore(ControlExploration.Request.ACTION_START)
 
     def explore(self, action, on_idle=None):
+        if self.humanFound and action == ControlExploration.Request.ACTION_START:
+            return
         request = ControlExploration.Request()
         request.action = action
         future = self.exploration_client.call_async(request)
@@ -80,6 +82,9 @@ class Subscriber(Node):
         self.humanLocation = msg
         print(f"Human found at ({msg.x:.2f}, {msg.y:.2f})")
         self.publishStatus()
+        self.explore(ControlExploration.Request.ACTION_STOP)
+        if self.goalHandle is not None:
+            self.cancelGoal()
 
     def publishStatus(self):
         status = StatusMsg()
@@ -109,10 +114,14 @@ class Subscriber(Node):
         )
 
     def cancelGoal(self):
+        if self.goalHandle is None:
+            return
         future = self.goalHandle.cancel_goal_async()
         return future.add_done_callback(checkCancellation)
 
     def updateGoals(self, msg: PointStamped, goalNum: int):
+        if self.humanFound:
+            return
         if self.goals[goalNum].status == Status.COMPLETE:
             return print("Goal already completed")
         if self.goals[goalNum].status == Status.ONGOING:
@@ -134,6 +143,9 @@ class Subscriber(Node):
         )
 
     def seekGoal(self, goalNum: int):
+        if self.humanFound:
+            self.goals[goalNum].status = Status.PENDING
+            return
         if not self.nav_client.server_is_ready():
             raise RuntimeError("Nav server is not ready")
         if self.goals[goalNum].message is None:
@@ -151,6 +163,9 @@ class Subscriber(Node):
                 result.add_done_callback(
                     lambda future: self.checkGoalComplete(future, goalNum)
                 )
+                if self.humanFound:
+                    self.cancelGoal()
+                    return
                 if goalNum != 2 and self.isPending(2):
                     return self.cancelGoal()
             else:
@@ -170,6 +185,9 @@ class Subscriber(Node):
         else:
             self.goals[goalNum].status = Status.PENDING
 
+        if self.humanFound:
+            return
+
         if goalNum != 2 and self.isPending(2):
             return self.seekGoal(2)
 
@@ -188,7 +206,10 @@ class Subscriber(Node):
         return None
 
 def checkCancellation(future):
-    if not future.result().goals_canceling:
+    response = future.result()
+    if response.return_code == response.ERROR_GOAL_TERMINATED:
+        return
+    if not response.goals_canceling:
         raise RuntimeError("Nav2 did not accept goal cancellation")
 
 
