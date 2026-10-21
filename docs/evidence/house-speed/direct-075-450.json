@@ -1,0 +1,8 @@
+{
+  "status": "FAIL: repeated already-reached goals without movement; run stopped.",
+  "sim_seconds": 299.88,
+  "max_known_area_m2": 90.66750270210208,
+  "final_distance_m": 61.019507263826625,
+  "obstacle_contacts": [],
+  "log_directory": "log/house-speed-tuning/direct-075-450"
+}

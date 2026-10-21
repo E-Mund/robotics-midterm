@@ -134,7 +134,15 @@ controller_server:
       xy_goal_tolerance: 0.25
       yaw_goal_tolerance: 0.25
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
+      # Reserve stationary alignment for large heading changes; let DWB steer
+      # through smaller turns instead of repeatedly stopping on new paths.
+      plugin: "nav2_rotation_shim_controller::RotationShimController"
+      primary_controller: "dwb_core::DWBLocalPlanner"
+      angular_dist_threshold: 1.2
+      forward_sampling_distance: 0.8
+      rotate_to_heading_angular_vel: 1.0
+      max_angular_accel: 3.2
+      simulate_ahead_time: 1.0
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
@@ -189,8 +197,9 @@ local_costmap:
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0
-        inflation_radius: 0.45
+        # Graded obstacle costs encourage hallway centering.
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.0
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -247,8 +256,9 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0
-        inflation_radius: 0.45
+        # Graded obstacle costs encourage hallway centering.
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.0
       always_send_full_costmap: True
 
 map_server:

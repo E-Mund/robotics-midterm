@@ -1,0 +1,8 @@
+{
+  "status": "FAIL: sustained room stall and disconnected circular-footprint costmap; run stopped.",
+  "sim_seconds": 343.74,
+  "max_known_area_m2": 61.84250184305014,
+  "final_distance_m": 44.11217211849685,
+  "obstacle_contacts": [],
+  "log_directory": "log/house-speed-tuning/consistent-075-450"
+}
