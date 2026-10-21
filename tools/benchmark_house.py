@@ -135,11 +135,11 @@ def main():
         if args.params:
             command.append(f'params_file:={Path(args.params).resolve()}')
         launch('navigation', command)
-        launch('subscriber', ['ros2', 'run', 'midterm', 'sub', '--ros-args', '-p', 'use_sim_time:=true'])
         explorer = ['ros2', 'launch', 'frontier_exploration_ros2', 'frontier_explorer.launch.py', 'use_sim_time:=true', 'autostart:=false', 'control_service_enabled:=true']
         if args.frontier_params:
             explorer.append(f'params_file:={Path(args.frontier_params).resolve()}')
         launch('frontier', explorer)
+        launch('subscriber', ['ros2', 'run', 'midterm', 'sub', '--ros-args', '-p', 'use_sim_time:=true'])
         start = time.monotonic()
         report = start
         client = node.create_client(GetParameters, '/controller_server/get_parameters')
@@ -195,6 +195,7 @@ def main():
             raise RuntimeError('Simulation failed to advance to requested duration')
     finally:
         (out / 'samples.json').write_text(json.dumps(samples, indent=2))
+        (out / 'completion-events.json').write_text(json.dumps(completion_events, indent=2))
         (out / 'goal-feedback.json').write_text(json.dumps(goal_feedback))
         (out / 'snapshots.json').write_text(json.dumps(snapshots))
         for process in reversed(processes):
@@ -216,6 +217,10 @@ def main():
     ranges = sorted(s['scan_min'] for s in samples if s['scan_min'] is not None and s['t'] >= 10)
     stalled = sum(s['active'] and math.hypot(s['x']-samples[i-20]['x'], s['y']-samples[i-20]['y']) < .10 for i, s in enumerate(samples) if i >= 20)
     summary = dict(spawn=[args.x, args.y], params=args.params or 'installed defaults', sim_seconds=samples[-1]['t'], distance_m=state['distance'], known_area_m2=state['known_area'], scan_min_m=min(ranges) if ranges else None, scan_p05_m=ranges[int(.05*len(ranges))] if ranges else None, stationary_active_windows=stalled, frontier_reached=frontier.count('Frontier goal reached'), frontier_failed=frontier.count('Frontier goal failed'), progress_failures=nav.count('Failed to make progress'), no_valid_trajectories=nav.count('No valid trajectories'), nav_goal_failed=nav.count('Goal failed'), nav_goal_succeeded=nav.count('Goal succeeded'))
+    # The pinned explorer reports aborted actions using the ROS status name.
+    summary['frontier_failed'] += frontier.count('frontier finished with status STATUS_ABORTED')
+    summary['frontier_failed'] += frontier.count('Frontier goal was rejected')
+    summary['nav_goal_canceled'] = nav.count('Goal canceled')
     summary['completion_events'] = completion_events
     summary['max_x'] = max(s['x'] for s in samples)
     summary['wall_seconds'] = time.monotonic() - wall_start

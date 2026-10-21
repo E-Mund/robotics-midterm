@@ -166,7 +166,8 @@ controller_server:
       - PathAlign
       - PathDist
       - GoalDist
-      BaseObstacle.scale: 0.02
+      # Prefer more obstacle clearance without the stalls observed at 0.5.
+      BaseObstacle.scale: 0.08
       PathAlign.scale: 32.0
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
