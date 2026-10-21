@@ -1,12 +1,20 @@
 # Midterm Programming Assignment
 ## Running instructions
 
+Run Script: ./run.sh
+
 Requires ROS 2 Humble with `turtlebot3_gazebo`, `slam_toolbox` and `nav2_bringup`.
-The script sources `/opt/ros/humble/setup.bash` if ROS isn't already sourced.
 Nav2 and slam_toolbox settings are in `midterm/config/`.
 
 ## Navigation - Roberto Molina
 Runs frontier navigation algorithm to explore the enviornment and implements custom goal logic.
+
+Goal1 Script: pixi run run ros2 topic pub --once /goal1 geometry_msgs/msg/PointStamped \
+  '{header: {frame_id: map}, point: {x: -3.8, y: 3.5, z: 0.0}}'
+Goal2 Script: pixi run run ros2 topic pub --once /goal2 geometry_msgs/msg/PointStamped \
+  '{header: {frame_id: map}, point: {x: -6.3, y: 3.0, z: 0.0}}'
+Goal3 Script: pixi run run ros2 topic pub --once /goal3 geometry_msgs/msg/PointStamped \
+  '{header: {frame_id: map}, point: {x: -2.5, y: 3.5, z: 0.0}}' 
 
 ## Human detection - Ethan Mund
 
