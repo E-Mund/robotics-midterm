@@ -16,22 +16,20 @@ Options: `--no-rviz`, `--no-build`, `--scenario goal1_only|goal2_only|both|goal2
 
 ### Manual (one terminal each)
 
-```
-# Terminal 1: Gazebo
+Terminal 1: Gazebo
 ros2 launch turtlebot3_gazebo turtlebot3_house.launch.py x_pose:=-2.5 y_pose:=3.5
 
-# Terminal 2: SLAM
+Terminal 2: SLAM
 ros2 launch slam_toolbox online_async_launch.py use_sim_time:=true
 
-# Terminal 3: Navigation
+Terminal 3: Navigation
 ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true
 
-# Terminal 4: Your node
+Terminal 4: Your node
 ros2 run midterm sub --ros-args -p use_sim_time:=true
 
-# Terminal 5: Frontier exploration
+Terminal 5: Frontier exploration
 ros2 launch frontier_exploration_ros2 frontier_explorer.launch.py use_sim_time:=true autostart:=false control_service_enabled:=true
-```
 
 To send goals by hand from another terminal (after `source install/setup.bash`):
 
