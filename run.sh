@@ -56,7 +56,7 @@ start ros2 launch nav2_bringup navigation_launch.py \
 start ros2 launch frontier_exploration_ros2 frontier_explorer.launch.py \
     use_sim_time:=true autostart:=false control_service_enabled:=true \
     params_file:="$WS/midterm/config/frontier_coverage.yaml"
-start ros2 run midterm human_detector --ros-args -p use_sim_time:=true
+start ros2 run midterm human_detector --ros-args -p use_sim_time:=true -p show:=true
 start ros2 run midterm sub --ros-args -p use_sim_time:=true
 
 wait
