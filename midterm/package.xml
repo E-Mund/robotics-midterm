@@ -25,6 +25,7 @@
   <exec_depend>turtlebot3_gazebo</exec_depend>
   <exec_depend>slam_toolbox</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_regulated_pure_pursuit_controller</exec_depend>
   <exec_depend>frontier_exploration_ros2</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

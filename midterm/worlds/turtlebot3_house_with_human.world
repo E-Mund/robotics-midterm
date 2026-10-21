@@ -5,8 +5,7 @@
     Based on turtlebot3_house.world (ROBOTIS-GIT/turtlebot3_simulations)
     Added: Gazebo Classic actor using the built-in cmu-13_26.bvh walk animation.
 
-    Human location in /map frame: x=3.5, y=1.8, z=0.0
-    The actor stands in the living room near the marble table.
+    Human location in /map frame: x=6.1, y=-4.4, z=0.0
   -->
   <world name="default">
     <scene>
@@ -61,21 +60,21 @@
       ══════════════════════════════════════════════════════════════
       HUMAN ACTOR
       Uses Gazebo Classic 11 built-in actor + cmu-13_26.bvh (walk).
-      The actor is placed at x=3.5, y=1.8 (living room, near marble
-      table) and walks a tiny 0.001 m/s loop — effectively standing
+      The actor is placed at x=6.1, y=-4.4 and walks a tiny
+      0.001 m/s loop — effectively standing
       still while still playing the animation skeleton.
 
       To make it truly stationary, set <animation_factor> to 0 and
       the trajectory loop to a single waypoint.
 
       human_location to publish in project_status/msg/Status:
-        x = 3.5,  y = 1.8,  z = 0.0  (ignore z)
+        x = 6.1,  y = -4.4,  z = 0.0  (ignore z)
       ══════════════════════════════════════════════════════════════
     -->
     <actor name="human">
 
-      <!-- World position: living room, left of marble table -->
-      <pose>3.5 1.8 0 0 0 3.14159</pose>
+      <!-- World position: x=6.1, y=-4.4, yaw=0.0 -->
+      <pose>6.1 -4.4 0 0 0 0.0</pose>
 
       <!-- Built-in Gazebo skin — no external mesh needed -->
       <skin>
@@ -91,7 +90,7 @@
       </animation>
 
       <script>
-        <!-- Loop a tiny triangle so the actor stays near x=3.5, y=1.8 -->
+        <!-- Loop a tiny triangle so the actor stays near x=6.1, y=-4.4 -->
         <loop>true</loop>
         <delay_start>0.0</delay_start>
         <auto_start>true</auto_start>
@@ -100,12 +99,12 @@
           <!-- Waypoint 1: home position -->
           <waypoint>
             <time>0</time>
-            <pose>3.5 1.8 0 0 0 0</pose>
+            <pose>6.1 -4.4 0 0 0 0.0</pose>
           </waypoint>
           <!-- Waypoint 2: tiny step so Gazebo has a valid trajectory -->
           <waypoint>
             <time>10</time>
-            <pose>3.5 1.8 0 0 0 0</pose>
+            <pose>6.1 -4.4 0 0 0 0.0</pose>
           </waypoint>
         </trajectory>
       </script>

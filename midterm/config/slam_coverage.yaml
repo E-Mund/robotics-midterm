@@ -1,4 +1,4 @@
-# Coverage trial profile; see codex/docs/house-coverage.md for validation and limitations.
+# Coverage scan matching retained; publish map every 0.5 simulation seconds.
 slam_toolbox:
   ros__parameters:
     solver_plugin: solver_plugins::CeresSolver
@@ -16,7 +16,7 @@ slam_toolbox:
     debug_logging: false
     throttle_scans: 1
     transform_publish_period: 0.02
-    map_update_interval: 1.0
+    map_update_interval: 0.5
     resolution: 0.05
     min_laser_range: 0.12
     max_laser_range: 3.5
@@ -34,7 +34,7 @@ slam_toolbox:
     link_match_minimum_response_fine: 0.1
     link_scan_maximum_distance: 1.5
     loop_search_maximum_distance: 3.0
-    # House simulation: avoid the distorted map corrections observed in testing.
+    # Retain the coverage profile's workaround for observed map distortion.
     do_loop_closing: false
     loop_match_minimum_chain_size: 10
     loop_match_maximum_variance_coarse: 3.0

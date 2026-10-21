@@ -106,7 +106,6 @@ class HumanDetector(Node):
 
             if loc is not None:
                 located = loc
-                self.get_logger().info(f"person at {loc}")
 
                 marker = Marker()
                 marker.header.frame_id = "map"

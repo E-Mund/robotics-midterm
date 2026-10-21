@@ -1,4 +1,5 @@
-# Coverage trial profile; see codex/docs/house-coverage.md for validation and limitations.
+# Validated stock-model coverage. Greedy start cost is translation + rotation
+# time: gain exponent and the separate distance-return term are zero.
 frontier_explorer:
   ros__parameters:
     map_topic: /map
@@ -21,13 +22,13 @@ frontier_explorer:
     costmap_qos_depth: 10
     local_costmap_qos_reliability: inherit
     local_costmap_qos_depth: -1
-    map_processing_rate_hz: 1.0
+    map_processing_rate_hz: 2.0
     autostart: false
     control_service_enabled: true
     completion_event_enabled: true
     escape_enabled: true
     return_to_start_on_complete: false
-    mrtsp_solver: dp
+    mrtsp_solver: greedy
     dp_solver_candidate_limit: 12
     dp_planning_horizon: 8
     frontier_map_optimization_enabled: true
@@ -35,12 +36,12 @@ frontier_explorer:
     goal_preemption_min_interval_s: 2.0
     goal_skip_on_blocked_goal: true
     post_goal_settle_enabled: true
-    post_goal_min_settle: 1.0
+    post_goal_min_settle: 0.25
     frontier_suppression_enabled: true
     all_frontiers_suppressed_behavior: stay
-    weight_distance_wd: 1.0
-    weight_gain_ws: 1.0
-    max_linear_speed_vmax: 0.26
+    weight_distance_wd: 0.0
+    weight_gain_ws: 0.0
+    max_linear_speed_vmax: 0.5
     max_angular_speed_wmax: 1.0
     sensor_effective_range_m: 1.5
     frontier_selection_min_distance: 0.4
